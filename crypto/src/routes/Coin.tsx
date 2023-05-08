@@ -11,6 +11,7 @@ import Price from "./Price";
 import Chart from "./Chart";
 import { useQuery } from "react-query";
 import { fetchCoinInfo, fetchCoinTickers } from "../api";
+import { Helmet } from "react-helmet";
 
 const Container = styled.div`
   padding: 0px 200px;
@@ -80,6 +81,20 @@ const Title = styled.h1`
 const Loader = styled.span`
   text-align: center;
   display: block;
+`;
+
+const BackButton = styled.button`
+  font-size: 30px;
+  font-weight: 900;
+  width: 60px;
+  height: 60px;
+  color: ${(props) => props.theme.bgColor};
+  background-color: ${(props) => props.theme.textColor};
+  border: none;
+  border-radius: 30px;
+  position: fixed;
+  bottom: 100px;
+  left: 100px;
 `;
 
 interface RouteParams {
@@ -157,11 +172,23 @@ function Coin() {
   );
   const { isLoading: tickersLoading, data: tickersData } = useQuery<PriceData>(
     ["tickers", coinId],
-    () => fetchCoinTickers(coinId)
+    () => fetchCoinTickers(coinId),
+    {
+      refetchInterval: 1000,
+    }
   );
   const loading = infoLoading || tickersLoading;
   return (
     <Container>
+      <Helmet>
+        <title>
+          {state?.name
+            ? state.name
+            : infoLoading
+            ? "Loading..."
+            : infoData?.name}
+        </title>
+      </Helmet>
       <Header>
         <Link to={`/${coinId}`}>
           <Title>
@@ -187,8 +214,8 @@ function Coin() {
               <span>{infoData?.symbol}</span>
             </OverviewItem>
             <OverviewItem>
-              <span>OPEN SOURCE:</span>
-              <span>{infoData?.open_source ? "Yes" : "No"}</span>
+              <span>PRICE:</span>
+              <span>${tickersData?.quotes.USD.price.toFixed(3)}</span>
             </OverviewItem>
           </Overview>
           <Description>{infoData?.description}</Description>
@@ -217,11 +244,14 @@ function Coin() {
               <Price />
             </Route>
             <Route path={`/:coinId/chart`}>
-              <Chart />
+              <Chart coinId={coinId} />
             </Route>
           </Switch>
         </>
       )}
+      <Link to="/">
+        <BackButton>{`<`}</BackButton>
+      </Link>
     </Container>
   );
 }
